@@ -38,14 +38,14 @@ foreach ($drive in $driveMappings) {
         $result = net use $driveLetter $path /persistent:yes 2>&1
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "  ✓ Successfully mapped $driveLetter" -ForegroundColor Green
+            Write-Host "  [SUCCESS] Mapped $driveLetter" -ForegroundColor Green
         } else {
-            Write-Host "  ✗ Failed to map $driveLetter" -ForegroundColor Red
+            Write-Host "  [FAILED] Could not map $driveLetter" -ForegroundColor Red
             Write-Host "    Error: $result" -ForegroundColor Red
         }
     }
     catch {
-        Write-Host "  ✗ Error mapping $driveLetter : $_" -ForegroundColor Red
+        Write-Host "  [ERROR] Error mapping $driveLetter : $_" -ForegroundColor Red
     }
 
     Write-Host ""
