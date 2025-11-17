@@ -17,6 +17,7 @@ Write-Host ""
 
 $driveLetter = "O:"
 $path = "\\Recorderreg\main"
+$label = "Recorder Main"  # Custom label for the drive (change this to whatever you want)
 
 Write-Host "Mapping $driveLetter to $path..." -ForegroundColor Yellow
 Write-Host ""
@@ -28,6 +29,25 @@ try {
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  [SUCCESS] Mapped $driveLetter" -ForegroundColor Green
+
+        # Set custom drive label
+        if ($label) {
+            try {
+                $driveLetterOnly = $driveLetter.TrimEnd(':')
+
+                # Create the registry key if it doesn't exist
+                if (-not (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly")) {
+                    New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly" -Force | Out-Null
+                }
+
+                # Set the default label
+                New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly" -Name "DefaultLabel" -Value $label -PropertyType String -Force | Out-Null
+                Write-Host "  [SUCCESS] Set drive label to '$label'" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "  [WARNING] Could not set custom label: $_" -ForegroundColor Yellow
+            }
+        }
     } else {
         Write-Host "  [FAILED] Could not map $driveLetter" -ForegroundColor Red
         Write-Host "    Error: $result" -ForegroundColor Red

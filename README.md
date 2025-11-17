@@ -35,9 +35,9 @@ Edit the `Map-NetworkDrives.ps1` file and add entries to the `$driveMappings` ar
 
 ```powershell
 $driveMappings = @(
-    @{DriveLetter = "J:"; Path = "\\bcfile\columbia\data\departments\circuitclerk\Court Doc External"}
-    @{DriveLetter = "K:"; Path = "\\server\share\anotherfolder"}
-    @{DriveLetter = "L:"; Path = "\\server\share\yetanotherfolder"}
+    @{DriveLetter = "J:"; Path = "\\bcfile\columbia\data\departments\circuitclerk\Court Doc External"; Label = "Court Doc External"}
+    @{DriveLetter = "K:"; Path = "\\server\share\anotherfolder"; Label = "My Documents"}
+    @{DriveLetter = "L:"; Path = "\\server\share\yetanotherfolder"; Label = "Shared Files"}
 )
 ```
 
@@ -45,6 +45,7 @@ $driveMappings = @(
 
 - **DriveLetter**: Must include the colon (e.g., `"J:"`, `"K:"`)
 - **Path**: Full UNC path to the network share (e.g., `"\\server\share\folder"`)
+- **Label**: (Optional) Custom display name for the drive in File Explorer. If not specified, Windows will show the full path
 
 ## Verifying Mappings
 
@@ -65,3 +66,5 @@ After running the script, verify the mappings by:
 - The script uses `net use` with `/persistent:yes` flag for reliability
 - No credentials are needed in the script (uses current user's AD permissions)
 - The batch launcher bypasses execution policy restrictions automatically
+- Custom drive labels are set via registry and will display in File Explorer instead of the full UNC path
+- You may need to refresh File Explorer (F5) or restart Explorer to see the custom labels take effect

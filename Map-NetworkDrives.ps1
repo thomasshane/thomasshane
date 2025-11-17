@@ -13,12 +13,12 @@
 #>
 
 # Define your drive mappings here
-# Format: @{DriveLetter = "X:"; Path = "\\server\share\folder"}
+# Format: @{DriveLetter = "X:"; Path = "\\server\share\folder"; Label = "Friendly Name"}
 $driveMappings = @(
-    @{DriveLetter = "J:"; Path = "\\bcfile\columbia\data\departments\circuitclerk\Court Doc External"}
+    @{DriveLetter = "J:"; Path = "\\bcfile\columbia\data\departments\circuitclerk\Court Doc External"; Label = "Court Doc External"}
     # Add more drive mappings below as needed:
-    # @{DriveLetter = "K:"; Path = "\\server\share\anotherfolder"}
-    # @{DriveLetter = "L:"; Path = "\\server\share\yetanotherfolder"}
+    # @{DriveLetter = "K:"; Path = "\\server\share\anotherfolder"; Label = "My Documents"}
+    # @{DriveLetter = "L:"; Path = "\\server\share\yetanotherfolder"; Label = "Shared Files"}
 )
 
 Write-Host "=====================================" -ForegroundColor Cyan
@@ -29,6 +29,7 @@ Write-Host ""
 foreach ($drive in $driveMappings) {
     $driveLetter = $drive.DriveLetter
     $path = $drive.Path
+    $label = $drive.Label
 
     Write-Host "Mapping $driveLetter to $path..." -ForegroundColor Yellow
 
@@ -39,6 +40,26 @@ foreach ($drive in $driveMappings) {
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  [SUCCESS] Mapped $driveLetter" -ForegroundColor Green
+
+            # Set custom drive label if provided
+            if ($label) {
+                try {
+                    $driveLetterOnly = $driveLetter.TrimEnd(':')
+                    $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly\DefaultLabel"
+
+                    # Create the registry key if it doesn't exist
+                    if (-not (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly")) {
+                        New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly" -Force | Out-Null
+                    }
+
+                    # Set the default label
+                    New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\$driveLetterOnly" -Name "DefaultLabel" -Value $label -PropertyType String -Force | Out-Null
+                    Write-Host "  [SUCCESS] Set drive label to '$label'" -ForegroundColor Green
+                }
+                catch {
+                    Write-Host "  [WARNING] Could not set custom label: $_" -ForegroundColor Yellow
+                }
+            }
         } else {
             Write-Host "  [FAILED] Could not map $driveLetter" -ForegroundColor Red
             Write-Host "    Error: $result" -ForegroundColor Red
