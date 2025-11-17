@@ -8,25 +8,25 @@ This script is designed for initial computer setup to map multiple network drive
 
 ## Usage
 
-### Running the Script
+### Quick Start (Recommended)
 
-1. **Open PowerShell as Administrator**
-   - Right-click on PowerShell
-   - Select "Run as Administrator"
+**Simply double-click `Map-NetworkDrives.bat`** - that's it!
 
-2. **Navigate to the script location**
+The batch file launcher will:
+- Use Windows PowerShell (built into Windows - no installation needed)
+- Bypass execution policy restrictions automatically
+- Run the drive mapping script
+- Pause so you can see the results
+
+### Alternative: Run PowerShell Script Directly
+
+If you prefer to run the PowerShell script directly:
+
+1. Open PowerShell
+2. Navigate to the script location
+3. Run:
    ```powershell
-   cd C:\path\to\script
-   ```
-
-3. **Allow script execution** (if this is the first time running PowerShell scripts)
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
-
-4. **Run the script**
-   ```powershell
-   .\Map-NetworkDrives.ps1
+   powershell.exe -ExecutionPolicy Bypass -File .\Map-NetworkDrives.ps1
    ```
 
 ### Adding More Drives
@@ -50,16 +50,18 @@ $driveMappings = @(
 
 After running the script, verify the mappings by:
 - Opening File Explorer - mapped drives should appear under "This PC"
-- Running `net use` in PowerShell/Command Prompt to see all network connections
+- Running `net use` in Command Prompt to see all network connections
 
 ## Troubleshooting
 
 - **Access Denied**: Ensure the user has proper AD group permissions for the network path
 - **Network Path Not Found**: Verify the UNC path is correct and the server is accessible
-- **Script Won't Run**: Check PowerShell execution policy with `Get-ExecutionPolicy`
+- **Drive already mapped**: The script will show an error but continue with other drives
 
 ## Notes
 
+- Works with Windows PowerShell 5.1+ (built into Windows 10/11 - no extra software needed)
 - Drive mappings are persistent and will reconnect automatically after logout/reboot
 - The script uses `net use` with `/persistent:yes` flag for reliability
 - No credentials are needed in the script (uses current user's AD permissions)
+- The batch launcher bypasses execution policy restrictions automatically
