@@ -16,6 +16,8 @@
 # Format: @{DriveLetter = "X:"; Path = "\\server\share\folder"; Label = "Friendly Name"}
 $driveMappings = @(
     @{DriveLetter = "J:"; Path = "\\bcfile\columbia\data\departments\circuitclerk\Court Doc External"; Label = "Court Doc External"}
+    @{DriveLetter = "W:"; Path = "\\bcfile\columbia\data\departments\e-filing\circuit"; Label = "Circuit"}
+    @{DriveLetter = "X:"; Path = "\\bcfile\columbia\data\departments\e-filing\div1"; Label = "Div1"}
     # Add more drive mappings below as needed:
     # @{DriveLetter = "K:"; Path = "\\server\share\anotherfolder"; Label = "My Documents"}
     # @{DriveLetter = "L:"; Path = "\\server\share\yetanotherfolder"; Label = "Shared Files"}
