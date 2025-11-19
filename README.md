@@ -1,70 +1,67 @@
-# Network Drive Mapping Script
+# Network Drive Mapping Scripts
 
-A PowerShell script to automatically map network drives with persistent connections on Windows computers.
+Simple PowerShell scripts to automatically map network drives with clean labels on Windows 11.
 
-## Purpose
+## What This Does
 
-This script is designed for initial computer setup to map multiple network drives that will persist after reboot/logout. The network paths are controlled by Active Directory group permissions.
+Maps four network drives:
+- **J Drive:** Court Doc External
+- **W Drive:** Circuit
+- **X Drive:** Div1
+- **O Drive:** Recorder Main
 
-## Usage
+Instead of showing ugly labels like `Court Doc External (\\bcfile\columbia\data\departments\circuitclerk)`, you get clean labels like `Court Doc External`.
 
-### Quick Start (Recommended)
+## Quick Start
 
-**Simply double-click `Map-NetworkDrives.bat`** - that's it!
+**Just double-click `Map-All-Drives.bat`** - that's it!
 
-The batch file launcher will:
-- Use Windows PowerShell (built into Windows - no installation needed)
-- Bypass execution policy restrictions automatically
-- Run the drive mapping script
-- Pause so you can see the results
+The script will:
+1. Map all four network drives with persistent connections
+2. Set clean labels using the correct Windows 11 method
+3. Restart Windows Explorer to apply changes
 
-### Alternative: Run PowerShell Script Directly
+## Files
 
-If you prefer to run the PowerShell script directly:
-
-1. Open PowerShell
-2. Navigate to the script location
-3. Run:
-   ```powershell
-   powershell.exe -ExecutionPolicy Bypass -File .\Map-NetworkDrives.ps1
-   ```
-
-### Adding More Drives
-
-Edit the `Map-NetworkDrives.ps1` file and add entries to the `$driveMappings` array:
-
-```powershell
-$driveMappings = @(
-    @{DriveLetter = "J:"; Path = "\\bcfile\columbia\data\departments\circuitclerk\Court Doc External"; Label = "Court Doc External"}
-    @{DriveLetter = "K:"; Path = "\\server\share\anotherfolder"; Label = "My Documents"}
-    @{DriveLetter = "L:"; Path = "\\server\share\yetanotherfolder"; Label = "Shared Files"}
-)
-```
-
-### Format
-
-- **DriveLetter**: Must include the colon (e.g., `"J:"`, `"K:"`)
-- **Path**: Full UNC path to the network share (e.g., `"\\server\share\folder"`)
-- **Label**: (Optional) Custom display name for the drive in File Explorer. If not specified, Windows will show the full path
-
-## Verifying Mappings
-
-After running the script, verify the mappings by:
-- Opening File Explorer - mapped drives should appear under "This PC"
-- Running `net use` in Command Prompt to see all network connections
+- **Map-All-Drives.bat** - Main script (double-click to run)
+- **Troubleshoot.bat** - Diagnostic tool if something goes wrong
 
 ## Troubleshooting
 
-- **Access Denied**: Ensure the user has proper AD group permissions for the network path
-- **Network Path Not Found**: Verify the UNC path is correct and the server is accessible
-- **Drive already mapped**: The script will show an error but continue with other drives
+If labels don't show correctly:
+1. Run **Troubleshoot.bat** to see what's wrong
+2. Try restarting your computer
+3. Make sure you have proper AD permissions for the network paths
+
+## How It Works
+
+Windows 11 stores network drive labels in:
+```
+HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\[encoded-path]\_LabelFromReg
+```
+
+The script sets this registry value for each drive, which tells Windows Explorer to display your custom label instead of the full UNC path.
+
+## Customizing
+
+To add or change drives, edit `Map-All-Drives.ps1` and modify the `$driveMappings` array:
+
+```powershell
+$driveMappings = @(
+    @{DriveLetter = "J:"; Path = "\\server\share\folder"; Label = "My Label"}
+    @{DriveLetter = "K:"; Path = "\\server\other\path"; Label = "Another Label"}
+)
+```
+
+## Requirements
+
+- Windows 11 (Build 22000+)
+- Network paths must be accessible via AD group permissions
+- No administrator privileges required
 
 ## Notes
 
-- Works with Windows PowerShell 5.1+ (built into Windows 10/11 - no extra software needed)
-- Drive mappings are persistent and will reconnect automatically after logout/reboot
-- The script uses `net use` with `/persistent:yes` flag for reliability
-- No credentials are needed in the script (uses current user's AD permissions)
-- The batch launcher bypasses execution policy restrictions automatically
-- Custom drive labels are set via registry and will display in File Explorer instead of the full UNC path
-- You may need to refresh File Explorer (F5) or restart Explorer to see the custom labels take effect
+- Drive mappings persist after reboot/logout
+- Uses `net use` with `/persistent:yes` flag
+- Works with current user's AD credentials (no password needed)
+- Compatible with domain-joined computers

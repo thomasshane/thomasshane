@@ -1,11 +1,10 @@
 <#
 .SYNOPSIS
-    Sets drive labels in MountPoints2 cache (the correct location for Windows 11).
+    Maps network drives with clean labels - Complete solution for Windows 11.
 
 .DESCRIPTION
-    After investigation, we discovered Windows 11 pulls labels from
-    HKCU:\...\MountPoints2\[encoded-path]\_LabelFromReg
-    NOT from DriveIcons\X\DefaultLabel
+    Maps all network drives (J, W, X, O) with persistent connections and sets
+    clean labels using the MountPoints2 registry method (correct for Windows 11).
 #>
 
 # Define your drive mappings
@@ -17,7 +16,7 @@ $driveMappings = @(
 )
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "MountPoints2 Label Setter" -ForegroundColor Cyan
+Write-Host "Network Drive Mapper with Clean Labels" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -28,22 +27,32 @@ foreach ($drive in $driveMappings) {
     $path = $drive.Path
     $label = $drive.Label
 
-    Write-Host "Setting label for $driveLetter ($path)..." -ForegroundColor Yellow
+    Write-Host "Setting up $driveLetter..." -ForegroundColor Yellow
+
+    # Step 1: Map the drive
+    Write-Host "  Mapping drive..." -ForegroundColor Gray
+    $result = net use $driveLetter $path /persistent:yes 2>&1
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  [SUCCESS] Drive mapped" -ForegroundColor Green
+    } else {
+        Write-Host "  [INFO] Drive may already be mapped" -ForegroundColor Gray
+    }
+
+    # Step 2: Set the label in MountPoints2 (the correct location for Windows 11)
+    Write-Host "  Setting clean label..." -ForegroundColor Gray
 
     # Encode the UNC path for MountPoints2 (replace \ with #)
     $encodedPath = $path -replace '\\', '#'
     $mountPointPath = "$mountPointsBase\$encodedPath"
 
-    Write-Host "  Registry path: $mountPointPath" -ForegroundColor Gray
-
     try {
         # Create the MountPoint key if it doesn't exist
         if (-not (Test-Path $mountPointPath)) {
-            Write-Host "  Creating MountPoint registry key..." -ForegroundColor Gray
             New-Item -Path $mountPointPath -Force | Out-Null
         }
 
-        # Set the _LabelFromReg value
+        # Set the _LabelFromReg value (this is what Windows 11 uses)
         New-ItemProperty -Path $mountPointPath -Name "_LabelFromReg" -Value $label -PropertyType String -Force | Out-Null
 
         # Verify it was set
@@ -52,28 +61,24 @@ foreach ($drive in $driveMappings) {
         if ($verify -and $verify._LabelFromReg -eq $label) {
             Write-Host "  [SUCCESS] Label set to '$label'" -ForegroundColor Green
         } else {
-            Write-Host "  [WARNING] Label set but verification failed" -ForegroundColor Yellow
+            Write-Host "  [WARNING] Label may not have been set correctly" -ForegroundColor Yellow
         }
 
-        # Also clear _LabelFromDesktopINI if it exists (it can override _LabelFromReg)
-        $desktopLabel = Get-ItemProperty -Path $mountPointPath -Name "_LabelFromDesktopINI" -ErrorAction SilentlyContinue
-        if ($desktopLabel) {
-            Write-Host "  Removing conflicting _LabelFromDesktopINI..." -ForegroundColor Gray
-            Remove-ItemProperty -Path $mountPointPath -Name "_LabelFromDesktopINI" -ErrorAction SilentlyContinue
-        }
+        # Clear _LabelFromDesktopINI if it exists (can override our label)
+        Remove-ItemProperty -Path $mountPointPath -Name "_LabelFromDesktopINI" -ErrorAction SilentlyContinue
     }
     catch {
-        Write-Host "  [ERROR] Failed to set label: $_" -ForegroundColor Red
+        Write-Host "  [ERROR] Could not set label: $_" -ForegroundColor Red
     }
 
     Write-Host ""
 }
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "Labels Set in MountPoints2" -ForegroundColor Cyan
+Write-Host "All drives configured!" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Now restarting Windows Explorer..." -ForegroundColor Yellow
+Write-Host "Restarting Windows Explorer..." -ForegroundColor Yellow
 
 try {
     Stop-Process -Name explorer -Force
@@ -81,9 +86,14 @@ try {
     Write-Host "Explorer restarted" -ForegroundColor Green
 }
 catch {
-    Write-Host "Could not restart Explorer" -ForegroundColor Yellow
+    Write-Host "Could not restart Explorer automatically" -ForegroundColor Yellow
 }
 
 Write-Host ""
-Write-Host "Check File Explorer - the labels should now be clean!" -ForegroundColor Green
-Write-Host "If not, restart the computer and check again." -ForegroundColor Gray
+Write-Host "DONE! Check File Explorer to see your drives with clean labels." -ForegroundColor Green
+Write-Host ""
+Write-Host "If labels don't appear immediately:" -ForegroundColor Yellow
+Write-Host "  1. Press F5 in File Explorer to refresh" -ForegroundColor Gray
+Write-Host "  2. Or restart your computer" -ForegroundColor Gray
+Write-Host ""
+Write-Host "If you still have issues, run Troubleshoot.bat" -ForegroundColor Gray
