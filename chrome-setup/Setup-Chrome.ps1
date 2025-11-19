@@ -21,20 +21,38 @@ Write-Host "Chrome Bookmarks and Startup Configuration" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Chrome profile path
-$chromePath = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default"
-$bookmarksFile = Join-Path $chromePath "Bookmarks"
-$preferencesFile = Join-Path $chromePath "Preferences"
+# Find Chrome profile
+Write-Host "Detecting Chrome profile..." -ForegroundColor Yellow
 
-# Check if Chrome is installed
-if (-not (Test-Path $chromePath)) {
-    Write-Host "[ERROR] Chrome profile not found at:" -ForegroundColor Red
-    Write-Host "  $chromePath" -ForegroundColor Gray
+$chromeUserDataPath = "$env:LOCALAPPDATA\Google\Chrome\User Data"
+$chromePath = $null
+$profileNames = @("Default", "Profile 1", "Profile 2", "Profile 3")
+
+foreach ($profileName in $profileNames) {
+    $testPath = Join-Path $chromeUserDataPath $profileName
+    if (Test-Path $testPath) {
+        $chromePath = $testPath
+        Write-Host "  [FOUND] Using profile: $profileName" -ForegroundColor Green
+        break
+    }
+}
+
+if (-not $chromePath) {
+    Write-Host "[ERROR] Chrome profile not found. Checked:" -ForegroundColor Red
+    foreach ($profileName in $profileNames) {
+        Write-Host "  - $chromeUserDataPath\$profileName" -ForegroundColor Gray
+    }
     Write-Host ""
     Write-Host "Please ensure Chrome is installed and has been run at least once." -ForegroundColor Yellow
     pause
     exit 1
 }
+
+$bookmarksFile = Join-Path $chromePath "Bookmarks"
+$preferencesFile = Join-Path $chromePath "Preferences"
+
+Write-Host "  Profile path: $chromePath" -ForegroundColor Gray
+Write-Host ""
 
 # Step 1: Close Chrome if running
 Write-Host "Step 1: Checking if Chrome is running..." -ForegroundColor Yellow
@@ -45,7 +63,7 @@ if ($chromeProcesses) {
 
     try {
         Stop-Process -Name chrome -Force
-        Start-Sleep -Seconds 2
+        Start-Sleep -Seconds 3
         Write-Host "  [SUCCESS] Chrome closed" -ForegroundColor Green
     }
     catch {
@@ -84,10 +102,50 @@ Write-Host ""
 Write-Host "Step 3: Adding bookmarks to bookmarks bar..." -ForegroundColor Yellow
 
 try {
+    # Check if bookmarks file exists, create if it doesn't
     if (-not (Test-Path $bookmarksFile)) {
-        Write-Host "  [ERROR] Bookmarks file not found. Has Chrome been run at least once?" -ForegroundColor Red
-        pause
-        exit 1
+        Write-Host "  [INFO] Bookmarks file not found, creating new one..." -ForegroundColor Yellow
+
+        # Create basic bookmarks structure
+        $newBookmarks = @{
+            checksum = ""
+            roots = @{
+                bookmark_bar = @{
+                    children = @()
+                    date_added = [string]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() * 10000000 + 11644473600000000)
+                    date_last_used = "0"
+                    date_modified = "0"
+                    guid = [guid]::NewGuid().ToString()
+                    id = "1"
+                    name = "Bookmarks bar"
+                    type = "folder"
+                }
+                other = @{
+                    children = @()
+                    date_added = [string]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() * 10000000 + 11644473600000000)
+                    date_last_used = "0"
+                    date_modified = "0"
+                    guid = [guid]::NewGuid().ToString()
+                    id = "2"
+                    name = "Other bookmarks"
+                    type = "folder"
+                }
+                synced = @{
+                    children = @()
+                    date_added = [string]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() * 10000000 + 11644473600000000)
+                    date_last_used = "0"
+                    date_modified = "0"
+                    guid = [guid]::NewGuid().ToString()
+                    id = "3"
+                    name = "Mobile bookmarks"
+                    type = "folder"
+                }
+            }
+            version = 1
+        }
+
+        $newBookmarks | ConvertTo-Json -Depth 100 | Set-Content $bookmarksFile -Encoding UTF8
+        Write-Host "  [SUCCESS] Created new bookmarks file" -ForegroundColor Green
     }
 
     # Read and parse bookmarks JSON
@@ -167,10 +225,20 @@ Write-Host ""
 Write-Host "Step 4: Configuring startup pages..." -ForegroundColor Yellow
 
 try {
+    # Check if preferences file exists, create if it doesn't
     if (-not (Test-Path $preferencesFile)) {
-        Write-Host "  [ERROR] Preferences file not found." -ForegroundColor Red
-        pause
-        exit 1
+        Write-Host "  [INFO] Preferences file not found, creating new one..." -ForegroundColor Yellow
+
+        # Create basic preferences structure
+        $newPreferences = @{
+            session = @{
+                restore_on_startup = 4
+                startup_urls = @()
+            }
+        }
+
+        $newPreferences | ConvertTo-Json -Depth 100 | Set-Content $preferencesFile -Encoding UTF8
+        Write-Host "  [SUCCESS] Created new preferences file" -ForegroundColor Green
     }
 
     # Read and parse preferences JSON
