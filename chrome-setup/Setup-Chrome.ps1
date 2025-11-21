@@ -231,10 +231,8 @@ try {
 
         # Create basic preferences structure
         $newPreferences = @{
-            session = @{
-                restore_on_startup = 4
-                startup_urls = @()
-            }
+            restore_on_startup = 4
+            startup_urls = @()
         }
 
         $newPreferences | ConvertTo-Json -Depth 100 | Set-Content $preferencesFile -Encoding UTF8
@@ -244,25 +242,39 @@ try {
     # Read and parse preferences JSON
     $preferencesJson = Get-Content $preferencesFile -Raw | ConvertFrom-Json
 
-    # Ensure session structure exists
-    if (-not $preferencesJson.session) {
+    # Set restore_on_startup to 4 (open specific pages) at ROOT level
+    if ($preferencesJson.PSObject.Properties['restore_on_startup']) {
+        $preferencesJson.restore_on_startup = 4
+    } else {
+        $preferencesJson | Add-Member -MemberType NoteProperty -Name "restore_on_startup" -Value 4
+    }
+
+    # Set startup URLs at ROOT level
+    $startupUrls = @($bookmarks | ForEach-Object { $_.Url })
+
+    if ($preferencesJson.PSObject.Properties['startup_urls']) {
+        $preferencesJson.startup_urls = $startupUrls
+    } else {
+        $preferencesJson | Add-Member -MemberType NoteProperty -Name "startup_urls" -Value $startupUrls
+    }
+
+    # Also set in session object for older Chrome versions
+    if (-not $preferencesJson.PSObject.Properties['session']) {
         $preferencesJson | Add-Member -MemberType NoteProperty -Name "session" -Value @{}
     }
 
-    # Set restore_on_startup to 4 (open specific pages)
-    if ($preferencesJson.session.PSObject.Properties['restore_on_startup']) {
-        $preferencesJson.session.restore_on_startup = 4
-    } else {
-        $preferencesJson.session | Add-Member -MemberType NoteProperty -Name "restore_on_startup" -Value 4
-    }
+    if ($preferencesJson.session -is [PSCustomObject]) {
+        if ($preferencesJson.session.PSObject.Properties['restore_on_startup']) {
+            $preferencesJson.session.restore_on_startup = 4
+        } else {
+            $preferencesJson.session | Add-Member -MemberType NoteProperty -Name "restore_on_startup" -Value 4 -ErrorAction SilentlyContinue
+        }
 
-    # Set startup URLs
-    $startupUrls = @($bookmarks | ForEach-Object { $_.Url })
-
-    if ($preferencesJson.session.PSObject.Properties['startup_urls']) {
-        $preferencesJson.session.startup_urls = $startupUrls
-    } else {
-        $preferencesJson.session | Add-Member -MemberType NoteProperty -Name "startup_urls" -Value $startupUrls
+        if ($preferencesJson.session.PSObject.Properties['startup_urls']) {
+            $preferencesJson.session.startup_urls = $startupUrls
+        } else {
+            $preferencesJson.session | Add-Member -MemberType NoteProperty -Name "startup_urls" -Value $startupUrls -ErrorAction SilentlyContinue
+        }
     }
 
     # Save preferences
