@@ -17,7 +17,7 @@ $bookmarks = @(
 )
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "Chrome Bookmarks and Startup Configuration" -ForegroundColor Cyan
+Write-Host "Recorder Bookmarks - Chrome Setup" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 

@@ -1,11 +1,11 @@
 @echo off
-REM Chrome Bookmarks and Startup Setup
+REM Recorder Bookmarks - Chrome Setup
 
 set "SCRIPT_DIR=%~dp0"
-set "PS_SCRIPT=%SCRIPT_DIR%Setup-Chrome.ps1"
+set "PS_SCRIPT=%SCRIPT_DIR%Setup-Recorder-Bookmarks.ps1"
 
 if not exist "%PS_SCRIPT%" (
-    echo ERROR: Could not find Setup-Chrome.ps1
+    echo ERROR: Could not find Setup-Recorder-Bookmarks.ps1
     echo Please ensure both files are in the same directory.
     echo.
     pause
